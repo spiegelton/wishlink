@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('../partials/head') %>
+</head>
+
+<body>
+    <div class="container">
+        <h2>
+            <%= wishlink.title %>
+        </h2>
+
+        <ul>
+            <% wishlink.products.forEach(function(product) { %>
+                <li>
+                    <strong>
+                        <%= product.name %>
+                    </strong>
+                    <a href="<%= product.url %>" style="display: block; font-size: small;">
+                        <%= product.url %>
+                    </a>
+                </li>
+                <% }); %>
+        </ul>
+        <div id="responseMessage"></div>
+    </div>
+    <!-- <button id="passwordModal">Is this your wishlink?</button> -->
+    <form id="verifyPassword">
+        Enter password to edit your Wishlist
+        <input type="text" id="password" name="password" style="display: block;">
+        <button type="submit">submit</button>
+    </form>
+    <script>
+        const pathname = window.location.pathname
+        const id = pathname.slice(-4)
+        const API_URL = `http://localhost:3000/list/${id}/verify`
+        const passwordEl = document.querySelector('#password');
+        const verifyForm = document.querySelector('#verifyPassword');
+        const responseMessage = document.querySelector('#responseMessage');
+        
+        verifyForm.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const password = passwordEl.value;
+            console.log(password)
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: password })
+                })
+                if (response.ok) {
+                    const data = await response.json();
+                    responseMessage.textContent = "Success!"
+                    console.log(data.createdList)
+                } else {
+                    const errorData = await response.json();
+                    responseMessage.innerText = `Error: ${errorData.error}`;
+                }
+            } catch (error) {
+                console.error(error);
+                responseMessage.innerText = 'An error occurred. Please try again.';
+            }
+        })
+    </script>
+</body>
+
+</html>

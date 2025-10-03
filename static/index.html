@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css">
+    <title>Wishlink</title>
+</head>
+
+<body>
+    <div class="container">
+        <form class="list-form">
+            <h1 contenteditable="true">My Wishlist</h1>
+            <div class="password-container">
+                <label for="password">If you want to edit your list after submission please enter a password:</label>
+                <input type="text" placeholder="Password" name="password" style="display: block;">
+            </div>
+            <fieldset class="product-fieldset">
+                <input type="text" name="product_name" placeholder="Product Name" />
+                <input type="url" name="product_url" placeholder="Product URL" />
+                <button class="remove-button">x</button>
+            </fieldset>
+            <button class="add-button" id="addProduct">Add Product</button>
+            <button type="submit" id="submit">Complete List</button>
+        </form>
+        <div id="responseMessage"></div>
+    </div>
+    <script>
+        const listForm = document.querySelector('.list-form');
+        const productList = document.querySelectorAll('.product-list');
+        const addProductButton = document.querySelector('#addProduct');
+        const submitButton = document.querySelector('#submit')
+
+        const API_URL = 'http://localhost:3000/list/create'
+        const responseMessage = document.querySelector('#responseMessage');
+
+        addProductButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            addProductFieldset();
+        })
+        submitButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const listTitle = document.querySelector('h1').textContent
+            const productsEl = document.querySelectorAll('.product-fieldset')
+            const passwordEl = document.querySelector('input[name="password"]')
+            const listObject = {
+                title: listTitle,
+                password: passwordEl.value,
+                products: []
+            }
+            for (product of productsEl) {
+                const productName = product.querySelector('input[name="product_name"]')
+                const productURL = product.querySelector('input[name="product_url"]')
+
+                const productObject = {
+                    name: productName.value,
+                    url: productURL.value
+                }
+                listObject.products.push(productObject)
+            }
+            console.log(listObject)
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(listObject)
+                })
+                if (response.ok) {
+                    const data = await response.json();
+                    responseMessage.textContent = "Success! Here's your Wish Link:"
+                    responseMessage.insertAdjacentHTML('beforeend', `<a target="_blank" href="${data.createdList.wishlinkURL}">${data.createdList.wishlinkURL}</a>`)
+                } else {
+                    const errorData = await response.json();
+                    responseMessage.innerText = `Error: ${errorData.error}`;
+                }
+            } catch (error) {
+                console.error(error);
+                responseMessage.innerText = 'An error occurred. Please try again.';
+
+            }
+        })
+        function addProductFieldset() {
+            const newProductFieldset = document.createElement('fieldset');
+
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'x'
+            removeButton.addEventListener('click', () => {
+                newProductFieldset.remove()
+            })
+            newProductFieldset.classList.add('product-fieldset');
+            newProductFieldset.insertAdjacentHTML('afterbegin', `<input type="text" name="product_name" placeholder="Product Name" /><input type="url" name="product_url" placeholder="Product URL" />`)
+            newProductFieldset.appendChild(removeButton)
+            addProductButton.insertAdjacentElement('beforebegin', newProductFieldset)
+        }
+    </script>
+</body>
+
+</html>
